@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payback Tracker</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e2e8f0;
+      --accent:#111827;
+      --soft:#f1f5f9;
+      --danger:#b91c1c;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .wrap{
+      max-width:460px;
+      margin:0 auto;
+      padding:16px 14px 28px;
+    }
+    .card{
+      background:var(--card);
+      border-radius:24px;
+      padding:18px;
+      box-shadow:0 8px 24px rgba(15,23,42,.08);
+      margin-bottom:14px;
+    }
+    h1,h2,h3,p{margin:0}
+    .eyebrow{
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:4px;
+    }
+    .balance{
+      font-size:40px;
+      font-weight:800;
+      letter-spacing:-.03em;
+      margin-top:10px;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:14px;
+      margin-top:6px;
+      line-height:1.4;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:16px;
+    }
+    .mini{
+      background:var(--soft);
+      border-radius:18px;
+      padding:12px;
+    }
+    .mini .label{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .mini .value{
+      font-weight:700;
+      margin-top:4px;
+      line-height:1.25;
+    }
+    label{
+      display:block;
+      font-size:14px;
+      font-weight:600;
+      margin-bottom:6px;
+    }
+    input, select, button, textarea{
+      width:100%;
+      font:inherit;
+    }
+    input, select, textarea{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:16px;
+      padding:12px 14px;
+      outline:none;
+    }
+    input:focus, select:focus, textarea:focus{
+      border-color:#94a3b8;
+      box-shadow:0 0 0 3px rgba(148,163,184,.2);
+    }
+    .field{margin-bottom:12px}
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .tabs{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      background:var(--soft);
+      border-radius:18px;
+      padding:6px;
+      margin-bottom:14px;
+    }
+    .tab{
+      border:none;
+      background:transparent;
+      padding:10px;
+      border-radius:14px;
+      font-weight:700;
+      color:var(--muted);
+      cursor:pointer;
+    }
+    .tab.active{
+      background:#fff;
+      color:var(--text);
+      box-shadow:0 2px 10px rgba(15,23,42,.06);
+    }
+    .btn{
+      border:none;
+      background:var(--accent);
+      color:#fff;
+      border-radius:16px;
+      padding:13px 14px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .btn.secondary{
+      background:#fff;
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+    .history-item{
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:12px;
+      margin-bottom:10px;
+    }
+    .history-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .history-title{
+      font-weight:700;
+      margin-bottom:4px;
+    }
+    .history-date,.history-note,.history-balance{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+    .amt{
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .amt.payment{color:#166534}
+    .amt.added{color:#b45309}
+    .delete{
+      margin-top:8px;
+      background:transparent;
+      border:none;
+      color:var(--danger);
+      padding:0;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .empty{
+      background:var(--soft);
+      border-radius:18px;
+      padding:14px;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .footer-note{
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+      margin-top:8px;
+    }
+    .progress{
+      height:10px;
+      width:100%;
+      background:var(--soft);
+      border-radius:999px;
+      overflow:hidden;
+      margin-top:14px;
+    }
+    .progress > div{
+      height:100%;
+      background:var(--accent);
+      width:0%;
+      transition:width .25s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="eyebrow">Payback Tracker</div>
+      <h1>What’s left to pay</h1>
+      <div id="balance" class="balance">$0.00</div>
+      <div class="sub">Auto-updates every time you add debt or record a payment.</div>
+      <div class="progress"><div id="progressBar"></div></div>
+      <div class="grid2">
+        <div class="mini">
+          <div class="label">Starting total</div>
+          <div id="startingTotalDisplay" class="value">$0.00</div>
+        </div>
+        <div class="mini">
+          <div class="label">Estimated payoff</div>
+          <div id="estimateLabel" class="value">Not enough data</div>
+          <div id="estimateDetail" class="label" style="margin-top:4px;">Add at least 2 payments for an estimate.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:14px;">Set or reset total owed</h2>
+      <div class="field">
+        <label for="startingAmount">Total owed</label>
+        <input id="startingAmount" type="number" step="0.01" min="0" placeholder="1500" />
+      </div>
+      <button id="saveStartingTotal" class="btn">Save total owed</button>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:14px;">Add an entry</h2>
+      <div class="tabs">
+        <button class="tab active" data-type="payment">Payment made</button>
+        <button class="tab" data-type="added">More added</button>
+      </div>
+
+      <div class="field">
+        <label for="entryAmount">Amount</label>
+        <input id="entryAmount" type="number" step="0.01" min="0" placeholder="50" />
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="entryDate">Date</label>
+          <input id="entryDate" type="date" />
+        </div>
+        <div class="field">
+          <label for="personName">Person</label>
+          <input id="personName" type="text" placeholder="Optional" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="note">Note</label>
+        <input id="note" type="text" placeholder="Cash App, paycheck, extra charge..." />
+      </div>
+
+      <button id="addEntryBtn" class="btn">Record payment</button>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;">
+        <h2>History</h2>
+        <button id="clearAllBtn" class="btn secondary" style="width:auto;padding:10px 12px;">Clear all</button>
+      </div>
+      <div id="history"></div>
+    </div>
+
+    <div class="footer-note">This app saves your info on your device in local storage.</div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "payback-tracker-webapp-v1";
+
+    const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+    const dateFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+    let state = {
+      totalOwed: 0,
+      personName: "",
+      entryType: "payment",
+      transactions: []
+    };
+
+    const els = {
+      balance: document.getElementById("balance"),
+      startingTotalDisplay: document.getElementById("startingTotalDisplay"),
+      estimateLabel: document.getElementById("estimateLabel"),
+      estimateDetail: document.getElementById("estimateDetail"),
+      progressBar: document.getElementById("progressBar"),
+      startingAmount: document.getElementById("startingAmount"),
+      saveStartingTotal: document.getElementById("saveStartingTotal"),
+      entryAmount: document.getElementById("entryAmount"),
+      entryDate: document.getElementById("entryDate"),
+      personName: document.getElementById("personName"),
+      note: document.getElementById("note"),
+      addEntryBtn: document.getElementById("addEntryBtn"),
+      history: document.getElementById("history"),
+      clearAllBtn: document.getElementById("clearAllBtn"),
+      tabs: Array.from(document.querySelectorAll(".tab"))
+    };
+
+    function todayLocal() {
+      const d = new Date();
+      const off = d.getTimezoneOffset();
+      const local = new Date(d.getTime() - off * 60000);
+      return local.toISOString().slice(0, 10);
+    }
+
+    function safeDate(value) {
+      const d = new Date(value + "T12:00:00");
+      return Number.isNaN(d.getTime()) ? new Date() : d;
+    }
+
+    function uid() {
+      return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function load() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        state.totalOwed = Number(parsed.totalOwed || 0);
+        state.personName = parsed.personName || "";
+        state.entryType = parsed.entryType || "payment";
+        state.transactions = Array.isArray(parsed.transactions) ? parsed.transactions : [];
+      } catch (e) {}
+    }
+
+    function currentBalance() {
+      const delta = state.transactions.reduce((sum, t) => {
+        return t.type === "added" ? sum + Number(t.amount) : sum - Number(t.amount);
+      }, 0);
+      return Math.max(0, state.totalOwed + delta);
+    }
+
+    function percentPaid() {
+      if (state.totalOwed <= 0) return 0;
+      const paid = Math.max(0, state.totalOwed - currentBalance());
+      return Math.max(0, Math.min(100, (paid / state.totalOwed) * 100));
+    }
+
+    function payoffEstimate(balance) {
+      if (balance <= 0) {
+        return { label: "Paid off", detail: "You’re done." };
+      }
+
+      const payments = state.transactions
+        .filter(t => t.type === "payment")
+        .sort((a, b) => safeDate(a.date) - safeDate(b.date));
+
+      if (payments.length < 2) {
+        return { label: "Not enough data", detail: "Add at least 2 payments for an estimate." };
+      }
+
+      const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+      const first = safeDate(payments[0].date);
+      const last = safeDate(payments[payments.length - 1].date);
+      const spanDays = Math.max(1, Math.round(Math.abs(last - first) / 86400000));
+
+      const avgPerDay = totalPaid / spanDays;
+      if (avgPerDay <= 0) {
+        return { label: "No estimate yet", detail: "Keep adding payments." };
+      }
+
+      const daysLeft = Math.ceil(balance / avgPerDay);
+      const projected = new Date();
+      projected.setDate(projected.getDate() + daysLeft);
+
+      let pace = "daily";
+      const avgGap = spanDays / Math.max(1, payments.length - 1);
+      if (avgGap > 20) pace = "monthly-ish";
+      else if (avgGap > 8) pace = "weekly-ish";
+
+      return {
+        label: dateFmt.format(projected),
+        detail: `Based on your recent ${pace} payment pace of about ${currency.format(avgPerDay * 30)}/month.`
+      };
+    }
+
+    function renderHistory() {
+      const items = [...state.transactions].sort((a, b) => safeDate(b.date) - safeDate(a.date));
+      if (!items.length) {
+        els.history.innerHTML = '<div class="empty">No entries yet. Add payments or extra charges to start tracking.</div>';
+        return;
+      }
+
+      let running = state.totalOwed;
+      const chronological = [...state.transactions].sort((a,b) => safeDate(a.date) - safeDate(b.date));
+      const balanceAfterMap = {};
+      chronological.forEach(t => {
+        running += t.type === "added" ? Number(t.amount) : -Number(t.amount);
+        balanceAfterMap[t.id] = Math.max(0, running);
+      });
+
+      els.history.innerHTML = items.map(t => `
+        <div class="history-item">
+          <div class="history-top">
+            <div>
+              <div class="history-title">${t.type === "payment" ? "Payment made" : "Amount added"}</div>
+              <div class="history-date">${dateFmt.format(safeDate(t.date))}${t.personName ? ` • ${escapeHtml(t.personName)}` : ""}</div>
+              ${t.note ? `<div class="history-note">${escapeHtml(t.note)}</div>` : ""}
+              <div class="history-balance">Balance after entry: ${currency.format(balanceAfterMap[t.id] || 0)}</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="amt ${t.type}">${t.type === "payment" ? "-" : "+"}${currency.format(Number(t.amount))}</div>
+              <button class="delete" data-id="${t.id}">Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      els.history.querySelectorAll(".delete").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-id");
+          state.transactions = state.transactions.filter(t => t.id !== id);
+          save();
+          render();
+        });
+      });
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function render() {
+      const balance = currentBalance();
+      const estimate = payoffEstimate(balance);
+
+      els.balance.textContent = currency.format(balance);
+      els.startingTotalDisplay.textContent = currency.format(state.totalOwed);
+      els.estimateLabel.textContent = estimate.label;
+      els.estimateDetail.textContent = estimate.detail;
+      els.progressBar.style.width = `${percentPaid()}%`;
+
+      els.personName.value = state.personName || "";
+      els.entryDate.value = els.entryDate.value || todayLocal();
+
+      els.tabs.forEach(tab => {
+        const active = tab.dataset.type === state.entryType;
+        tab.classList.toggle("active", active);
+      });
+
+      els.addEntryBtn.textContent = state.entryType === "payment" ? "Record payment" : "Add to amount owed";
+      renderHistory();
+    }
+
+    els.tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        state.entryType = tab.dataset.type;
+        save();
+        render();
+      });
+    });
+
+    els.saveStartingTotal.addEventListener("click", () => {
+      const amount = Number(els.startingAmount.value);
+      if (Number.isNaN(amount) || amount < 0) return;
+      state.totalOwed = amount;
+      state.transactions = [];
+      state.personName = els.personName.value.trim();
+      els.startingAmount.value = "";
+      save();
+      render();
+    });
+
+    els.addEntryBtn.addEventListener("click", () => {
+      const amount = Number(els.entryAmount.value);
+      if (Number.isNaN(amount) || amount <= 0) return;
+
+      const entry = {
+        id: uid(),
+        type: state.entryType,
+        amount,
+        date: els.entryDate.value || todayLocal(),
+        note: els.note.value.trim(),
+        personName: els.personName.value.trim(),
+        createdAt: new Date().toISOString()
+      };
+
+      state.personName = els.personName.value.trim();
+      state.transactions.push(entry);
+      els.entryAmount.value = "";
+      els.note.value = "";
+      save();
+      render();
+    });
+
+    els.clearAllBtn.addEventListener("click", () => {
+      if (!confirm("Clear all saved data?")) return;
+      state = { totalOwed: 0, personName: "", entryType: "payment", transactions: [] };
+      save();
+      els.startingAmount.value = "";
+      els.entryAmount.value = "";
+      els.note.value = "";
+      els.personName.value = "";
+      els.entryDate.value = todayLocal();
+      render();
+    });
+
+    load();
+    els.entryDate.value = todayLocal();
+    render();
+  </script>
+</body>
+</html>
